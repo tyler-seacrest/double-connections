@@ -171,16 +171,17 @@
   // Handle touch move
   function handleTouchMove(e) {
     e.preventDefault();
-    const touch = e.touches[0];
-    const cardBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (cardBelow && cardBelow.classList.contains('card') && cardBelow !== draggingCard) {
-      swapCards(draggingCard, cardBelow);
+
     }
   }
 
   // Handle touch end
   function handleTouchEnd(e) {
     draggingCard.classList.remove('dragging');
+	const touch = e.touches[0];
+    const cardBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (cardBelow && cardBelow.classList.contains('card') && cardBelow !== draggingCard) {
+      swapCards(draggingCard, cardBelow);
     draggingCard = null;
   }
 
