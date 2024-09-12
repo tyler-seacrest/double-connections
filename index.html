@@ -140,6 +140,7 @@
   let draggingCard = null;
   let touchPosX = 0;
   let touchPosY = 0;
+  const touch = null;
   
   function handleDragStart(e) {
     draggingCard = this;
@@ -159,7 +160,7 @@
     draggingCard = null;
   }
 
-// Handel touch start
+  // Handle touch start
   function handleTouchStart(e) {
     e.preventDefault();
     draggingCard = this;
@@ -171,19 +172,24 @@
   // Handle touch move
   function handleTouchMove(e) {
     e.preventDefault();
+    const touch = e.touches[0];
+    touchPosX = e.touches[0].clientX;
+    touchPosY = e.touches[0].clientY;
 
-    
   }
 
   // Handle touch end
   function handleTouchEnd(e) {
     draggingCard.classList.remove('dragging');
-	const touch = e.touches[0];
-    const cardBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+
+	
+	const cardBelow = document.elementFromPoint(touchPosX, touchPosY);
     if (cardBelow && cardBelow.classList.contains('card') && cardBelow !== draggingCard) {
       swapCards(draggingCard, cardBelow);
-    draggingCard = null;
-	}
+    }
+	
+	draggingCard = null;
+	
   }
 
   function swapCards(card1, card2) {
