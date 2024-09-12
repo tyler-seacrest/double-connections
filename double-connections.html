@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4x4 Card Grid with Buttons</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .grid-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .grid-row {
+      display: grid;
+      grid-template-columns: repeat(4, 120px) 120px;
+      gap: 15px;
+    }
+    .card {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: lightgray;
+      border: 2px solid #777777;
+      font-size: 18px;
+      cursor: grab;
+      user-select: none;
+    }
+    .card.dragging {
+      opacity: 0.5;
+    }
+    .button {
+      background-color: pink;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="grid-wrapper" id="gridWrapper">
+  <!-- Rows will be dynamically created here -->
+</div>
+
+
+<script>
+  const words = [
+    'quarter', 'blow', 'kill', 'bill',
+    'two', 'punched thru', 'decree', 'pound',
+    'sent', 'law', 'executed', 'passed',
+    'draw', 'too', 'cuff', 'cent'
+  ];
+  
+  const connections = [
+  [['cent', 'two', 'sent', 'too'], '2 out of 3 homophones'],
+  [['quarter', 'draw', 'executed', 'kill'], 'lethal punishment'],
+  [['bill', 'law', 'passed', 'decree'], 'creating government rules'],
+  [['pound', 'blow', 'punched thru', 'cuff'], 'hit'],
+  [['cent', 'quarter', 'bill', 'pound'], 'money'],
+  [['two', 'draw', 'law', 'blow'], 'silent w'],
+  [['sent', 'executed', 'passed', 'punched thru'], 'completed'],
+  [['too', 'kill', 'decree', 'cuff'], 'ends in double letter']
+  ];
+
+
+  const gridWrapper = document.getElementById('gridWrapper');
+
+  let rowCount = 4;
+  let columnCount = 4;
+
+  function createCard(word, index) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.draggable = true;
+    card.innerHTML = word;
+    card.setAttribute('data-index', index);
+
+    card.addEventListener('dragstart', dragStart);
+    card.addEventListener('dragover', dragOver);
+    card.addEventListener('drop', drop);
+    card.addEventListener('dragend', dragEnd);
+
+    return card;
+  }
+
+  function createButton(text, className, onClickHandler) {
+    const button = document.createElement('button');
+    button.className = className;
+    button.innerHTML = text;
+    button.addEventListener('click', onClickHandler);
+    return button;
+  }
+
+  // Create the grid with buttons
+  function initializeGrid() {
+    for (let row = 0; row < rowCount; row++) {
+      const gridRow = document.createElement('div');
+      gridRow.className = 'grid-row';
+
+      for (let col = 0; col < columnCount; col++) {
+        const card = createCard(words[row * columnCount + col], row * columnCount + col);
+        gridRow.appendChild(card);
+      }
+
+      // Add row button at the end of each row
+      const rowButton = createButton('> check', 'button', () => handleRowButton(row));
+      gridRow.appendChild(rowButton);
+      
+      gridWrapper.appendChild(gridRow);
+    }
+
+    const gridRow = document.createElement('div');
+    gridRow.className = 'grid-row';
+
+    // Add column buttons below the grid
+    for (let col = 0; col < columnCount; col++) {
+      const columnButton = createButton('v check', 'button', () => handleColumnButton(col));
+      gridRow.appendChild(columnButton);
+    }
+	gridWrapper.appendChild(gridRow);
+  }
+
+  let draggedCard = null;
+
+  function dragStart(e) {
+    draggedCard = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function dragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function drop(e) {
+    e.preventDefault();
+    if (this !== draggedCard) {
+      swapCards(draggedCard, this);
+    }
+  }
+
+  function dragEnd() {
+    this.classList.remove('dragging');
+    draggedCard = null;
+  }
+
+  function swapCards(card1, card2) {
+    const temp = card1.innerHTML;
+    card1.innerHTML = card2.innerHTML;
+    card2.innerHTML = temp;
+	checkGreenButtons();
+  }
+  
+  
+
+  // Button handlers (for future functionality)
+  function handleRowButton(rowIndex) {
+	const arr = [];
+	for(let i = 0; i < columnCount; i++) {
+		arr.push(cards[rowIndex*rowCount+i].innerHTML);
+	}
+	
+	for(let i = 0; i < connections.length; i++) {
+		if(arraysEqual(arr,connections[i][0])){
+			alert(connections[i][1]);
+			buttons[rowIndex].style.backgroundColor='lightgreen';
+			
+			}
+		}
+  }
+
+  function handleColumnButton(colIndex) {
+	const arr = [];
+	for(let i = 0; i < rowCount; i++) {
+		arr.push(cards[i*rowCount+colIndex].innerHTML);
+	}
+
+	for(let i = 0; i < connections.length; i++) {
+	
+		if(arraysEqual(arr,connections[i][0])){
+			alert(connections[i][1]);
+			buttons[colIndex+4].style.backgroundColor='lightgreen';
+			}
+		}
+
+  }
+
+  
+function arraysEqual(arr1, arr2) {
+  return arr1.length === arr2.length && new Set(arr1).size === new Set(arr2).size && [...new Set(arr1)].every(item => arr2.includes(item));
+}
+
+function checkGreenButtons() {
+	for(let j = 0; j < 4; j++) {
+		if(buttons[j].style.backgroundColor==='lightgreen') {
+			const arr = [];
+			let k = 0;
+			for(let i = 0; i < columnCount; i++) {
+				arr.push(cards[j*rowCount+i].innerHTML);
+			}
+			
+			for(let i = 0; i < connections.length; i++) {
+				if(arraysEqual(arr,connections[i][0]))
+					k++;
+			
+			}
+		
+			if(k==0)
+				buttons[j].style.backgroundColor='pink';
+		}
+	}
+	
+	for(let j = 0; j < 4; j++) {
+		if(buttons[j+4].style.backgroundColor==='lightgreen') {
+			const arr = [];
+			let k = 0;
+			for(let i = 0; i < rowCount; i++) {
+				arr.push(cards[i*rowCount+j].innerHTML);
+			}
+
+			for(let i = 0; i < connections.length; i++) {
+				if(arraysEqual(arr,connections[i][0]))
+					k++;
+			
+			}
+		
+			if(k==0)
+				buttons[j+4].style.backgroundColor='pink';
+		}
+	}
+}
+  
+  
+  // Initialize the grid with cards and buttons
+  initializeGrid();
+  
+  
+  const cards = gridWrapper.querySelectorAll('.card');
+  const buttons = gridWrapper.querySelectorAll('.button');
+
+  
+</script>
+
+</body>
+</html>
