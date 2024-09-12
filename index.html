@@ -172,7 +172,7 @@
   function handleTouchMove(e) {
     e.preventDefault();
 
-    }
+    
   }
 
   // Handle touch end
@@ -183,6 +183,7 @@
     if (cardBelow && cardBelow.classList.contains('card') && cardBelow !== draggingCard) {
       swapCards(draggingCard, cardBelow);
     draggingCard = null;
+	}
   }
 
   function swapCards(card1, card2) {
