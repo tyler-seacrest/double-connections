@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+  <title>4x4 Card Grid with Buttons</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px;
+    }
+    .grid-wrapper {
+	  position:  absolute;
+    }
+
+    .card {
+	  position:  absolute;
+      display: flex; 
+	  width: 15vw;
+	  height: 7vw;
+	  border-radius: 10px;
+      justify-content: center;
+      align-items: center;
+      background-color: #ddd;
+      border: 1px solid #777777;
+      font-size: 2vw;
+	  cursor: pointer;
+      transition: transform 0.3s ease-in-out;
+    }
+    .card.selected {
+        background-color: #aaa;
+		}
+	.card.hcorrect {
+		background-color: #ff9;
+		}
+	.card.hcorrect.selected {
+		background-color: #cc0;
+		}
+	.card.vcorrect {
+		background-color: lightblue;
+		}
+	.card.vcorrect.selected {
+		background-color: #7ac;
+		}
+	.card.hcorrect.vcorrect {
+		background-color: lightgreen;
+		}
+	.card.hcorrect.vcorrect.selected {
+		background-color: #3a3;
+		}
+	
+    .button {
+	  position:  absolute;
+      background-color: purple; 
+	  width: 15vw;
+	  height: 5vw;
+	  border-radius: 10px;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 2vw;
+    }
+	.answer {
+	  position:  absolute;
+      justify-content: center;
+      align-items: center;
+	  width: 15vw;
+	  height: 5vw;
+      display: flex; 
+      color: blue;
+      padding: 10px;
+      border: none;
+      font-size: 2vw;
+	  animation: fadeIn 5s; 
+      transition: transform 0.3s ease-in-out;
+	}
+	.answer.horizontal {
+	color: #770;
+	}
+	.congrats {
+	  position:  absolute;
+	  color: purple;
+      display: flex; 
+	  width: 63vw;
+	  height: 31vw;
+	  opacity: 0.8; 
+	  border-radius: 10px;
+      justify-content: center;
+      align-items: center;
+      background-color: lightgreen;
+      border: 1px solid #777777;
+      font-size: 4vw;
+	  animation: fadeInPartial 5s; 
+      transition: transform 0.3s ease-in-out;
+	}
+	
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fadeInPartial {
+  0% { opacity: 0; }
+  100% { opacity: 0.8; }
+}
+  </style>
+</head>
+<body>
+
+<div class="grid-wrapper" id="gridWrapper">
+  <!-- Rows will be dynamically created here -->
+</div>
+
+
+
+
+<script>
+
+
+  const words = [
+    'cover', 'running time', 'saddle', 'mean',
+    'martingale', 'limiting', 'attack', 'snark',
+    'higher derivative', 'eavesdropper', 'atomic event', 'hash',
+    'stable', 'trajectory', 'joint distribution', 'leaves'
+  ];
+  
+  const connections = [
+  [['joint distribution', 'leaves', 'higher derivative', 'hash'], '420'],
+  [['eavesdropper', 'mean', 'snark', 'limiting'], 'insults'],
+  [['running time', 'martingale', 'stable', 'saddle'], 'horse terms'],
+  [['trajectory', 'atomic event', 'cover', 'attack'], 'military terms'],
+  [['higher derivative', 'saddle', 'trajectory', 'limiting'], 'calculus'],
+  [['joint distribution', 'mean', 'martingale', 'atomic event'], 'prob/stat'],
+  [['snark', 'leaves', 'stable', 'cover'], 'graph theory'],
+  [['hash', 'running time', 'attack', 'eavesdropper'], 'cryptography']
+  ];
+
+
+  let selectedCards = [];
+  let movingCards = [];
+
+  const gridWrapper = document.getElementById('gridWrapper');
+
+
+  let rowCount = 4;
+  let columnCount = 4;
+  let cardWidth = 16;
+  let cardHeight = 8;
+  const cardArray = [];
+  
+  let solvedHorizontal = 0;
+  let solvedVertical = 0;
+  
+
+  function createCard(word, index) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = word;
+	let deltaX = index%4;
+	let deltaY = Math.floor(index/4);
+	card.setAttribute('deltaX', deltaX);
+	card.setAttribute('deltaY', deltaY);
+	card.setAttribute('horizontalGroup', 0);
+	card.setAttribute('verticalGroup', 0);
+	cardArray[deltaX][deltaY].push(card);
+    card.setAttribute('data-index', index);
+    card.addEventListener('click', () => selectCard(card));
+    transformCard(card);
+	return card;
+  }
+  
+  
+  function addAnswerRight(text, position) {
+   const answer = document.createElement('div');
+   answer.className = 'answer';
+    answer.innerHTML = "&larr; " + text;
+	answer.classList.add('horizontal');
+	answer.style.transform = `translate(${(columnCount-2)*cardWidth}vw, ${position*cardHeight}vw)`;
+	return answer;
+  }
+  
+  function addAnswerDown(text, position) {
+     const answer = document.createElement('div');
+   answer.className = 'answer';
+    answer.innerHTML = "&uarr; " + text;
+	answer.style.transform = `translate(${(position-2)*cardWidth}vw, ${rowCount*cardHeight}vw)`;
+	return answer;
+  }
+  
+  
+  function transformCard(card) {
+	let deltaX = card.getAttribute('deltaX');
+	let deltaY = card.getAttribute('deltaY');
+	card.style.transform = `translate(${(deltaX-2)*cardWidth}vw, ${(deltaY)*cardHeight}vw)`;
+  }
+  
+  function selectCard(card) {
+	if(!selectedCards.includes(card)) {
+		if(selectedCards.length==4)  {
+			deselectAll();
+			}
+			
+		card.classList.add('selected');
+		selectedCards.push(card);
+	}
+	else
+		{
+		let j = selectedCards.indexOf(card);
+		selectedCards.splice(j, 1);
+		card.classList.remove('selected');
+		}
+  
+  }
+  
+  
+  function deselectAll() {
+  for(card of selectedCards){
+	card.classList.remove('selected');
+	}
+  selectedCards = [];
+  }
+
+
+let buttonCount = 0;
+
+  function createButton(text, className, onClickHandler) {
+    const button = document.createElement('button');
+	buttonCount++;
+    button.className = className;
+    button.innerHTML = text;
+    button.addEventListener('click', onClickHandler);
+	button.style.transform = `translate(${(buttonCount-3)*cardWidth}vw, ${(rowCount+1)*cardHeight}vw)`;
+	
+    return button;
+  }
+
+  // Create the grid with buttons
+  function initializeGrid() {
+  /*  for (let row = 0; row < rowCount; row++) {
+      const gridRow = document.createElement('div');
+      gridRow.className = 'grid-row';
+
+      for (let col = 0; col < columnCount; col++) {
+        const card = createCard(words[row * columnCount + col], row * columnCount + col);
+        gridRow.appendChild(card);
+      }
+
+      
+      gridWrapper.appendChild(gridRow);
+    }
+*/
+	for(let i = 0; i < columnCount; i++) {
+		cardArray.push([]);
+		for(let j = 0; j < rowCount; j++) {
+			cardArray[i].push([]);
+		}
+	}
+
+	
+	for(let i = 0; i < words.length; i++) {
+		gridWrapper.appendChild(createCard(words[i], i));
+	}
+	
+	
+
+	  gridWrapper.appendChild(createButton("move left", "button", moveLeft));
+	  gridWrapper.appendChild(createButton("move up", "button", moveUp));
+	  gridWrapper.appendChild(createButton("swap", "button", swapTwo));
+	  gridWrapper.appendChild(createButton("submit", "button", submit));
+
+
+
+  }
+
+
+  function swapTwo() {
+  if(selectedCards.length > 1) {
+	swap(selectedCards[0], selectedCards[1]);
+	}
+  }
+  
+  
+  
+    
+  function setAllCards() {
+  
+	for(let i = 0; i < columnCount; i++) {
+		for(let j = 0; j < rowCount; j++) {
+			for(let k = 0; k < cardArray[i][j].length; k++) {
+				setPosition(cardArray[i][j][k], i, j);
+					
+			}
+		}
+		
+	}
+  }
+
+  function moveLeft() {
+  
+  
+		
+		for(card of selectedCards) {
+			let [x, y] = getXY(card);
+			
+			
+			if(x > 0 && solvedVertical < 4) {
+				for(let i = 0; i < rowCount; i++) {
+					let tempCard = cardArray[solvedVertical][(y+i)%(rowCount)][0];
+
+					
+					if(!selectedCards.includes(tempCard)					
+					&& (card.getAttribute('horizontalGroup')==tempCard.getAttribute('horizontalGroup'))
+					&& (card.getAttribute('verticalGroup')==tempCard.getAttribute('verticalGroup'))){
+						swapPosition(tempCard, card, "horizontal");
+						setAllCards();
+						break;
+					}
+				}
+			}
+
+	
+		
+		}
+		
+  }
+  
+
+  
+
+  
+  function moveUp() {
+  
+		
+		for(card of selectedCards)  {
+			let [x, y] = getXY(card);
+			
+			
+			if(y > 0 && solvedHorizontal < 4) {
+				for(let i = 0; i < columnCount; i++) {
+					let tempCard = cardArray[(x+i)%(columnCount)][solvedHorizontal][0];
+					if(!selectedCards.includes(tempCard) 
+					&& (card.getAttribute('horizontalGroup')==tempCard.getAttribute('horizontalGroup'))
+					&& (card.getAttribute('verticalGroup')==tempCard.getAttribute('verticalGroup'))){
+						swapPosition(tempCard, card, "vertical");
+						setAllCards();
+						break;
+					}
+				}
+			}
+
+	
+		
+		}
+		
+  
+  }
+  
+  
+  function getCard(x, y) {
+	  for(const card of cards) {
+		  let deltaX = card.getAttribute('deltaX');
+		  let deltaY = card.getAttribute('deltaY');
+		  if(x == deltaX && y == deltaY) {
+			return card;
+			}
+		}
+  
+  }
+  
+  function getXY(card) {
+	return [Number(card.getAttribute('deltaX')), Number(card.getAttribute('deltaY'))];
+  
+  }
+  
+  
+  function moveCardInArray(card, xNew, yNew) {
+	let [x, y] = getXY(card);
+	let j = cardArray[x][y].indexOf(card);
+	cardArray[x][y].splice(j, 1);
+	cardArray[xNew][yNew].push(card);
+	
+  
+  }
+  
+  function setPosition(card, x, y) {
+	card.setAttribute('deltaX', x);
+	card.setAttribute('deltaY', y);
+	transformCard(card);
+  
+	}
+  
+  
+  
+  function swapPosition(card1, card2, direction) {
+	let [x1, y1] = getXY(card1);
+	let [x2, y2] = getXY(card2);
+	let xDir = 1;
+	let yDir = 1;
+	if(x1 > x2) 
+		xDir*=-1;
+	if(y1 > y2) 
+		yDir*=-1;
+	
+	
+	moveCardInArray(card2, x1, y1);
+	
+	if(direction==="horizontal"){
+		for(let i = 0; i < (x2-x1)*xDir; i++) {
+				moveCardHorz((x1+i*xDir), y1, xDir);
+		}
+		
+		
+		for(let i = 0; i < (y2-y1)*yDir; i++) {
+				moveCardVert(x2, y1+i*yDir, yDir);
+		}
+	}
+	else {
+			
+		for(let i = 0; i < (y2-y1)*yDir; i++) {
+				moveCardVert(x1, y1+i*yDir, yDir);
+		}
+	
+	
+		for(let i = 0; i < (x2-x1)*xDir; i++) {
+				moveCardHorz((x1+i*xDir), y2, xDir);
+		}
+		
+
+	
+	}
+	
+  }
+  
+  
+  function moveCardHorz(x, y, xDir) {
+    let card = cardArray[x][y].shift();
+    cardArray[(x+xDir)%columnCount][y].push(card);
+  }
+  
+  
+  function moveCardVert(x, y, yDir) {
+	let card = cardArray[x][y].shift();
+	cardArray[x][(y+yDir)%rowCount].push(card);
+  }
+  
+  function swap(card1, card2)  {
+	let [x1, y1] = getXY(card1);
+	let [x2, y2] = getXY(card2);
+	cardArray[x1][y1].shift();
+	cardArray[x1][y1].push(card2);
+	cardArray[x2][y2].shift();
+	cardArray[x2][y2].push(card1);
+	setAllCards();
+  
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+ function submit() {
+	if(selectedCards.length==4) {
+		const arr = [];
+		for(let i = 0; i < 4; i++) {
+			arr.push(selectedCards[i].innerHTML);
+		}
+	
+		for(let i = 0; i < connections.length; i++) {
+			if(arraysEqual(arr,connections[i][0])){
+					if(runAsVertical()){
+						moveLeft();
+						gridWrapper.appendChild(addAnswerDown(connections[i][1], solvedVertical));
+						solvedVertical++;
+						for(card of selectedCards) {
+							card.classList.add('vcorrect');
+							card.setAttribute('verticalGroup', solvedVertical);
+						}
+						deselectAll();
+
+					}
+					else{
+						moveUp();
+						gridWrapper.appendChild(addAnswerRight(connections[i][1], solvedHorizontal));
+						solvedHorizontal++;
+						for(card of selectedCards) {
+							card.classList.add('hcorrect');
+							card.setAttribute('horizontalGroup', solvedHorizontal);
+						
+							}
+						deselectAll();
+					}
+				if(solvedHorizontal==4 && solvedVertical==4)
+					congrats();
+				}
+			}
+	}
+ }
+
+
+function congrats() {
+    const congrats = document.createElement('div');
+    congrats.className = 'congrats';
+    congrats.innerHTML = "Nicely solved!";
+    congrats.addEventListener('click', removeCongrats);
+	congrats.style.transform = `translate(${-2*cardWidth}vw, ${0*cardHeight}vw)`;
+	gridWrapper.appendChild(congrats);
+}
+
+
+function removeFadeOut( el, speed ) {
+    var seconds = speed/1000;
+    el.style.transition = "opacity "+seconds+"s ease";
+
+    el.style.opacity = 0;
+    setTimeout(function() {
+        el.parentNode.removeChild(el);
+    }, speed);
+}
+
+
+function removeCongrats() {
+	const congrats = gridWrapper.querySelector('.congrats');
+	removeFadeOut(congrats, 200);
+}
+
+function runAsVertical() {
+	const arr = []
+	let column = selectedCards[0].getAttribute("deltaX");
+	for(card of selectedCards) {
+			if(card.getAttribute("horizontalGroup") > 0)
+				return true;
+			}
+	
+	for(card of selectedCards) {
+			if(card.getAttribute("verticalGroup") > 0)
+				return false;
+			}
+	
+	if(solvedVertical > 0)
+		return true;
+			
+	for(card of selectedCards) {
+			if(card.getAttribute("deltaX")!=column)
+				return false
+			}		
+			
+
+			
+	return true;
+}
+
+  
+function arraysEqual(arr1, arr2) {
+  return arr1.length === arr2.length && new Set(arr1).size === new Set(arr2).size && [...new Set(arr1)].every(item => arr2.includes(item));
+}
+
+  
+  // Initialize the grid with cards and buttons
+  initializeGrid();
+  
+  
+  const cards = gridWrapper.querySelectorAll('.card');
+  const buttons = gridWrapper.querySelectorAll('.button');
+
+
+  
+</script>
+
+</body>
+</html>
