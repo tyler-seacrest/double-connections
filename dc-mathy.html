@@ -10,23 +10,24 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 10px;
+      margin: 1vw;
     }
     .grid-wrapper {
 	  position:  absolute;
     }
 
     .card {
+      display: flex;
 	  position:  absolute;
-      display: flex; 
-	  width: 15vw;
-	  height: 7vw;
-	  border-radius: 10px;
+	  width: 18vw;
+	  height: 11vw;
+	  border-radius: 1vw;
       justify-content: center;
-      align-items: center;
+      text-align: center;
+	  align-items: center;
       background-color: #ddd;
       border: 1px solid #777777;
-      font-size: 2vw;
+      font-size: 2.5vw;
 	  cursor: pointer;
       transition: transform 0.3s ease-in-out;
     }
@@ -55,26 +56,28 @@
     .button {
 	  position:  absolute;
       background-color: purple; 
-	  width: 15vw;
-	  height: 5vw;
-	  border-radius: 10px;
+	  width: 18vw;
+	  height: 7vw;
+	  border-radius: 2vw;
       color: white;
-      padding: 10px;
+      padding: 1vw;
       border: none;
       cursor: pointer;
-      font-size: 2vw;
+      font-size: 2.5vw;
     }
 	.answer {
 	  position:  absolute;
+	  display: flex;
       justify-content: center;
-      align-items: center;
-	  width: 15vw;
-	  height: 5vw;
+      text-align: center;
+	  align-items: center;
+	  width: 18vw;
+	  height: 11vw;
       display: flex; 
       color: blue;
-      padding: 10px;
+      padding: 1vw;
       border: none;
-      font-size: 2vw;
+      font-size: 2.5vw;
 	  animation: fadeIn 5s; 
       transition: transform 0.3s ease-in-out;
 	}
@@ -85,15 +88,15 @@
 	  position:  absolute;
 	  color: purple;
       display: flex; 
-	  width: 63vw;
-	  height: 31vw;
+	  width: 75vw;
+	  height: 47vw;
 	  opacity: 0.8; 
-	  border-radius: 10px;
+	  border-radius: 1vw;
       justify-content: center;
       align-items: center;
       background-color: lightgreen;
       border: 1px solid #777777;
-      font-size: 4vw;
+      font-size: 5vw;
 	  animation: fadeInPartial 5s; 
       transition: transform 0.3s ease-in-out;
 	}
@@ -146,11 +149,13 @@
   const gridWrapper = document.getElementById('gridWrapper');
 
 
-  let rowCount = 4;
-  let columnCount = 4;
-  let cardWidth = 16;
-  let cardHeight = 8;
+  const rowCount = 4;
+  const columnCount = 4;
+  const cardWidth = 19;
+  const cardHeight = 12;
+  const offset = -2.5;
   const cardArray = [];
+  
   
   let solvedHorizontal = 0;
   let solvedVertical = 0;
@@ -179,7 +184,7 @@
    answer.className = 'answer';
     answer.innerHTML = "&larr; " + text;
 	answer.classList.add('horizontal');
-	answer.style.transform = `translate(${(columnCount-2)*cardWidth}vw, ${position*cardHeight}vw)`;
+	answer.style.transform = `translate(${(columnCount+offset)*cardWidth}vw, ${position*cardHeight}vw)`;
 	return answer;
   }
   
@@ -187,15 +192,14 @@
      const answer = document.createElement('div');
    answer.className = 'answer';
     answer.innerHTML = "&uarr; " + text;
-	answer.style.transform = `translate(${(position-2)*cardWidth}vw, ${rowCount*cardHeight}vw)`;
+	answer.style.transform = `translate(${(position+offset)*cardWidth}vw, ${rowCount*cardHeight}vw)`;
 	return answer;
   }
   
   
   function transformCard(card) {
-	let deltaX = card.getAttribute('deltaX');
-	let deltaY = card.getAttribute('deltaY');
-	card.style.transform = `translate(${(deltaX-2)*cardWidth}vw, ${(deltaY)*cardHeight}vw)`;
+	let [x, y] = getXY(card);
+	card.style.transform = `translate(${(x+offset)*cardWidth}vw, ${(y)*cardHeight}vw)`;
   }
   
   function selectCard(card) {
@@ -233,7 +237,7 @@ let buttonCount = 0;
     button.className = className;
     button.innerHTML = text;
     button.addEventListener('click', onClickHandler);
-	button.style.transform = `translate(${(buttonCount-3)*cardWidth}vw, ${(rowCount+1)*cardHeight}vw)`;
+	button.style.transform = `translate(${(buttonCount+offset-1)*cardWidth}vw, ${(rowCount+1)*cardHeight}vw)`;
 	
     return button;
   }
@@ -511,7 +515,7 @@ function congrats() {
     congrats.className = 'congrats';
     congrats.innerHTML = "Nicely solved!";
     congrats.addEventListener('click', removeCongrats);
-	congrats.style.transform = `translate(${-2*cardWidth}vw, ${0*cardHeight}vw)`;
+	congrats.style.transform = `translate(${offset*cardWidth}vw, ${0*cardHeight}vw)`;
 	gridWrapper.appendChild(congrats);
 }
 
